@@ -1,0 +1,94 @@
+<script>
+  google.script.run.withSuccessHandler(showData).getData();
+
+  function showData(dataArray) {
+    $(document).ready(function() {
+      let table = $('#data-table').DataTable({
+        data: dataArray,
+        columns: [
+          { "title": "No"},
+          { "title": "Tanggal" },
+          { "title": "Pengelola / PJ" },
+          { "title": "Nama WP" },
+          { "title": "NPWPD" },
+          { "title": "Alamat"},
+          { "title": "Nomor TLP" },
+          { "title": "Dasar" },
+          { "title": "Jenis Alat" },
+          { "title": "Hasil BAP" },
+          { "title": "Petugas" },
+          { "title": "Ket Pemeriksaan"},
+          { "title": "Temuan"}
+        ],
+        columnDefs: [
+          {
+            targets: [3, 4, 7, 10, 12], // Indices of columns "Hasil BAP" and "Petugas"
+            render: function(data, type, row) {
+              if (type === 'display') {
+                let lines = data.split(';').filter(line => line.trim() !== '');
+                let styledLines = lines.map(line => '- ' + line.trim());
+                return styledLines.join('<br>');
+              }
+              return data;
+            }
+          },
+          {
+            targets: [2, 6, 10, 12],
+            visible: false,
+          }
+        ],
+        buttons: [
+          {
+            extend: 'csv',
+            split: [ 'pdf', 'excel'],
+            exportOptions: {
+              modifier: {
+                search: 'applied'
+              }
+            }
+          },
+          'colvis'
+        ],
+        dom: 
+          "<'row'<'col-sm-12 col-md-4'l><'col-sm-12 col-md-4'B><'col-sm-12 col-md-4'f>>" +
+          "<'row'<'col-sm-12'tr>>" +
+          "<'row'<'col-sm-12 col-md-6'i><'col-sm-12 col-md-6'p>>",
+      });
+
+      // Custom search function for exact match
+      $('#search-input').on('keyup', function() {
+        let searchValue = this.value;
+        let searchType = $('#search-type').val();
+        var columnIdx;
+
+        if (searchType === 'tanggal') {
+          columnIdx = 1;
+        } else if (searchType === 'dasar') {
+          columnIdx = 7;
+        } else if (searchType === 'jenis') {
+          columnIdx = 8;
+        } else if (searchType === 'keterangan') {
+          columnIdx = 11;
+        } else {
+          columnIdx = null; 
+        } 
+
+        table.columns(columnIdx).search('').draw(); 
+
+        if (searchValue !== '') {
+          table
+            .columns(columnIdx)
+            .search('^' + searchValue + '$', true, false)
+            .draw();
+        }
+      });
+
+      $('#search-input').on('change keyup', function() {
+        let searchValue = this.value;
+        if (searchValue === '') {
+          table.columns().search('').draw();
+        }
+      });
+    });
+  }
+</script>
